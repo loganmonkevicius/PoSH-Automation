@@ -1,0 +1,12 @@
+
+
+#variables for domain
+$domainname = 'ShawnLogan.com'
+$domaincontroller = 'THEDC'
+
+#Install Active Directory and DNS
+Enter-PSSession -VMName $domaincontroller
+$Services = 'AD-Domain-Services, DNS'
+Install-WindowsFeature -Name $services -IncludeManagementTools
+Install-ADDSForest -DomainName $domainname -InstallDNS
+
