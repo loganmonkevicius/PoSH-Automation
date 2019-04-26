@@ -1,0 +1,54 @@
+
+
+$username = 'Administrator'
+$password = ConvertTo-SecureString -String 'Pa55w.rd' -AsPlainText -Force
+$credential = [pscredential]::new($username,$password)
+
+$staticips = @(
+    '192.168.0.2',
+    '192.168.0.3',
+    '192.168.0.4',
+    '192.168.0.5'
+)
+
+   $vmnames = @(
+    'THEDC',
+   'MYCHILD',
+    'MC2',
+    'MC3'
+)
+
+
+
+$defaultgate = '192.168.0.1'
+$prefix = '24'
+$alias = 'Ethernet'
+ 
+$counter=0 
+
+foreach ($vmname in $vmnames){
+    Start-VM -Name $vmnames
+    }
+
+#Disable DHCP on every VM
+foreach ($VMname in $vmnames)
+{
+Invoke-Command -VMName $VMname -ScriptBlock {
+    $netconnect = 'Ethernet'
+    $netadapter = Get-NetAdapter -Name $netconnect
+    $netadapter | Set-NetIPInterface -Dhcp Disabled
+    }    
+}
+
+#Set Static IP for each VM
+foreach ($vmname in $vmnames)
+{
+    $VMIP = $staticips[$counter]
+    $session = New-PSSession -VMName $vmname -Credential $credential
+    Invoke-command -Session $session -ScriptBlock {
+       New-NetIPAddress -IPAddress $using:VMIP -InterfaceAlias $alias -DefaultGateway $defaultgate -PrefixLength $prefix
+    }
+    $counter++
+    Remove-PSSession -Session $session
+}
+
